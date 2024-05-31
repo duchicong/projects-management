@@ -1,6 +1,6 @@
 study nodejs with express
 
-use dbeaver then setting connection
+use dbeaver then setting connection at `Driver properties`
 
 ```bash
 allowPublicKeyRetrieval is true
@@ -10,7 +10,7 @@ run docker compose :
 
 `cd docker`
 
-`docker-compose -f mysql.yml -p mysql-nodejs up -d`
+`docker-compose -f mysql.yml -p project-management up -d`
 
 Create file migration with CLI:
 
