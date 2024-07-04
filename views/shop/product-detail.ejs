@@ -6,15 +6,14 @@
     <%- include('../includes/navigation.ejs') %>
 
     <main>
-        <% if (prods.length > 0) { %>
-            <div class="grid">
-                <% for (let product of prods) { %>
-                    <article class="card product-item">
+        <% if (product) { %>
+                    <article class="centered">
                         <header class="card__header">
                             <h1 class="product__title"><%= product.title %></h1>
                         </header>
+                        <br>
                         <div class="card__image">
-                            <img src="<%= product.imageUrl %>"
+                            <img width="auto" height="400" src="<%= product.imageUrl %>"
                                 alt="<%= product.title %>">
                         </div>
                         <div class="card__content">
@@ -22,12 +21,9 @@
                             <p class="product__description"><%= product.description %></p>
                         </div>
                         <div class="card__actions">
-                            <a href="/products/<%= product.id %>" class="btn">Detail</a>
                             <%- include('../includes/add-to-cart.ejs', {product: product}) %>
                         </div>
                     </article>
-                <% } %>
-            </div>
         <% } else { %>
             <h1>No Products Found!</h1>
         <% } %>

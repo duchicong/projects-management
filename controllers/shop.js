@@ -1,3 +1,4 @@
+const Cart = require("../models/cart");
 const Product = require("../models/product");
 
 exports.getProducts = (req, res, next) => {
@@ -23,17 +24,65 @@ exports.getIndex = (req, res, next) => {
   });
 };
 
-exports.getCart = (req, res, next) => {
+exports.getDetail = (req, res, next) => {
+  const productId = req.params.id;
+
+  Product.findId(productId, (product) =>
+    res.render("shop/product-detail", {
+      product,
+      pageTitle: product.title,
+      path: `/products/`,
+      hasProducts: true,
+      activeShop: true,
+      productCSS: true,
+    })
+  );
+};
+
+exports.deleteProduct = (req, res, next) => {
   Product.fetchAll((products) => {
-    res.render("shop/cart", {
+    res.render("shop/product-detail", {
       prods: products,
-      pageTitle: "Your Cart",
-      path: "/cart",
+      pageTitle: "Shop",
+      path: "/products/:id",
       hasProducts: products.length > 0,
       activeShop: true,
       productCSS: true,
     });
   });
+};
+
+exports.getCart = (req, res, next) => {
+  Cart.getCart((cart) => {
+    Product.fetchAll((prods) => {
+      const products = [];
+      if (cart || cart?.products?.length) {
+        for (product of prods) {
+          const cartProd = cart.products.find((prod) => prod.id === product.id);
+          if (cartProd) {
+            products.push({ ...product, qty: cartProd.qty });
+          }
+        }
+      }
+
+      res.render("shop/cart", {
+        products,
+        pageTitle: "Your Cart",
+        path: "/cart",
+        hasProducts: products.length > 0,
+        activeShop: true,
+        productCSS: true,
+      });
+    });
+  });
+};
+
+exports.postCart = (req, res) => {
+  const productId = req.body.productId;
+  Product.findId(productId, (product) =>
+    Cart.addProduct(product.id, product.price)
+  );
+  res.redirect("/cart");
 };
 
 exports.getOrders = (req, res, next) => {
@@ -59,5 +108,15 @@ exports.getCheckout = (req, res, next) => {
       activeShop: true,
       productCSS: true,
     });
+  });
+};
+
+exports.postDeleteItemCart = (req, res) => {
+  const productId = req.body.id;
+  Product.findId(productId, (product) => {
+    if (product) {
+      Cart.deleteProduct(product.id, product.price);
+      res.redirect("/cart");
+    }
   });
 };
