@@ -2,6 +2,9 @@ const path = require("path");
 
 const express = require("express");
 const bodyParser = require("body-parser");
+const sequelize = require("./util/database");
+const Product = require("./models/product");
+const User = require("./models/user");
 
 const errorController = require("./controllers/error");
 
@@ -21,4 +24,17 @@ app.use(shopRoutes);
 
 app.use(errorController.get404);
 
-app.listen(8080);
+Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
+User.hasMany(Product);
+
+/**
+ * force: {true} this is alway delete data if has any update of tables: user, product is updated.
+ */
+sequelize
+  // .sync({ force: true })
+  .sync()
+  .then((result) => {
+    // console.log(result);
+    app.listen(8080);
+  })
+  .catch((err) => console.log(err));
