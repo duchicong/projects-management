@@ -15,9 +15,20 @@ app.set("views", "views");
 
 const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
+const Cart = require("./models/cart");
+const CartItem = require("./models/cart-item");
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
+
+app.use((req, res, next) => {
+  User.findByPk(1)
+    .then((user) => {
+      req.user = user;
+      next();
+    })
+    .catch((err) => console.log(err));
+});
 
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
@@ -26,6 +37,10 @@ app.use(errorController.get404);
 
 Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
 User.hasMany(Product);
+User.hasOne(Cart);
+Cart.belongsTo(User);
+Cart.belongsToMany(Product, { through: CartItem });
+Product.belongsToMany(Cart, { through: CartItem });
 
 /**
  * force: {true} this is alway delete data if has any update of tables: user, product is updated.
@@ -35,6 +50,20 @@ sequelize
   .sync()
   .then((result) => {
     // console.log(result);
+    return User.findByPk(1);
+  })
+  .then((user) => {
+    if (!user)
+      return User.create({
+        nickname: "cong.du",
+        email: "duconggpdg@gmail.com",
+      });
+    return user;
+  })
+  .then((user) => {
+    return user.createCart();
+  })
+  .then(() => {
     app.listen(8080);
   })
   .catch((err) => console.log(err));
