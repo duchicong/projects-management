@@ -1,10 +1,10 @@
 const path = require("path");
-const mongoConnect = require("./util/database");
+const connectDb = require("./util/database").mongoConnect;
 const express = require("express");
 const bodyParser = require("body-parser");
 // const sequelize = require("./util/database");
 // const Product = require("./models/product");
-// const User = require("./models/user");
+const User = require("./models/user");
 
 const errorController = require("./controllers/error");
 
@@ -13,8 +13,8 @@ const app = express();
 app.set("view engine", "ejs");
 app.set("views", "views");
 
-// const adminRoutes = require("./routes/admin");
-// const shopRoutes = require("./routes/shop");
+const adminRoutes = require("./routes/admin");
+const shopRoutes = require("./routes/shop");
 // const Cart = require("./models/cart");
 // const CartItem = require("./models/cart-item");
 // const Order = require("./models/order");
@@ -23,17 +23,17 @@ app.set("views", "views");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// app.use((req, res, next) => {
-//   User.findByPk(1)
-//     .then((user) => {
-//       req.user = user;
-//       next();
-//     })
-//     .catch((err) => console.log(err));
-// });
+app.use((req, res, next) => {
+  User.findById("66aba4e71659a17dd0eb436f")
+    .then((user) => {
+      req.user = user;
+      next();
+    })
+    .catch((err) => console.log(err));
+});
 
-// app.use("/admin", adminRoutes);
-// app.use(shopRoutes);
+app.use("/admin", adminRoutes);
+app.use(shopRoutes);
 
 // app.use(errorController.get404);
 
@@ -73,7 +73,6 @@ app.use(express.static(path.join(__dirname, "public")));
 //   })
 //   .catch((err) => console.log(err));
 
-mongoConnect((client) => {
-  console.log(client);
+connectDb(() => {
   app.listen(8080);
 });

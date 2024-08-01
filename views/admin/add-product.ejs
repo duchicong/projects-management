@@ -24,7 +24,7 @@
                 <label for="price">Price</label>
                 <input type="number" name="price" id="price" step="0.01" value="<%= product?.price %>">
             </div>
-            <input type="hidden" name="id" value="<%= product?.id %>">
+            <input type="hidden" name="id" value="<%= product?._id %>">
 
             <button class="btn" type="submit"><%- product ? 'Update Product' : 'Add Product' %></button>
         </form>

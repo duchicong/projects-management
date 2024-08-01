@@ -14,10 +14,8 @@ exports.getAddProduct = (req, res, next) => {
 exports.getEditProduct = (req, res) => {
   const productId = req.params.id;
 
-  req.user
-    .getProducts({ where: { id: productId } })
-    .then((products) => {
-      const product = products.shift();
+  Product.findById(productId)
+    .then((product) => {
       if (!product) res.redirect("/");
 
       res.render("admin/add-product", {
@@ -34,16 +32,16 @@ exports.getEditProduct = (req, res) => {
 
 exports.postEditProduct = (req, res) => {
   const { id, title, description, imageUrl, price } = req.body;
-  req.user
-    .getProducts({ where: { id } })
-    .then((products) => {
-      const product = products.shift();
+  if (!id) res.redirect("/admin/products");
+  Product.findById(id)
+    .then((product) => {
+      if (!product) res.redirect("/");
       product.title = title;
       product.description = description;
       product.imageUrl = imageUrl;
       product.price = price;
 
-      return product.save();
+      return new Product(product).save();
     })
     .then(() => {
       res.redirect("/admin/products");
@@ -55,8 +53,7 @@ exports.postEditProduct = (req, res) => {
 };
 
 exports.getIndex = (req, res, next) => {
-  req.user
-    .getProducts()
+  Product.findAll()
     .then((products) => {
       res.render("admin/products", {
         prods: products,
@@ -73,17 +70,10 @@ exports.getIndex = (req, res, next) => {
 exports.postAddProduct = (req, res, next) => {
   const { title, description, imageUrl, price } = req.body;
 
-  req.user
-    .createProduct({
-      title,
-      description,
-      price,
-      imageUrl,
-      userId: req.user.id,
-    })
-    .then((result) => {
-      console.log("create product ", result);
-      res.redirect("/");
+  new Product({ title, description, imageUrl, price, userId: req.user._id })
+    .save()
+    .then(() => {
+      res.redirect("/admin/products");
     })
     .catch((err) => console.log("error create product ", err));
 };
@@ -91,15 +81,8 @@ exports.postAddProduct = (req, res, next) => {
 exports.postDeleteProduct = (req, res) => {
   const id = req.body.id;
 
-  req.user
-    .getProducts({ where: { id } })
-    .then((products) => {
-      const product = products.shift();
-      return req.user.removeProduct(product?.id);
-    })
-    .then(() => {
-      res.redirect("/admin/products");
-    })
+  Product.deleteById(id)
+    .then(() => res.redirect("/admin/products"))
     .catch((err) => {
       console.log(err);
       res.redirect("/404");

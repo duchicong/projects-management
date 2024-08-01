@@ -1,84 +1,100 @@
-// const fs = require("fs");
-// const path = require("path");
-// const dirRoot = require("../util/path");
-// const Cart = require("./cart");
-// const db = require("../util/database");
+// const sequelize = require("../util/database");
+// const { Sequelize, DataTypes } = require("sequelize");
 
-// const pathProduct = path.join(dirRoot, "data", "products.json");
+// const Product = sequelize.define("product", {
+//   id: {
+//     type: DataTypes.INTEGER,
+//     allowNull: false,
+//     autoIncrement: true,
+//     primaryKey: true,
+//   },
+//   title: {
+//     type: DataTypes.STRING,
+//   },
+//   price: {
+//     type: DataTypes.DOUBLE,
+//     allowNull: false,
+//   },
+//   imageUrl: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+//   description: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+// });
+const getDb = require("../util/database").getDb;
+const mongoDb = require("mongodb");
+const TABLE_NAME = "products";
 
-// const getProductsFromFile = (cb) => {
-//   fs.readFile(pathProduct, (err, fileContent) => {
-//     if (err) cb([]);
-//     else cb(JSON.parse(fileContent));
-//   });
-// };
+class Product {
+  constructor({ title, price, description, imageUrl, _id, userId }) {
+    this.title = title;
+    this.price = price;
+    this.description = description;
+    this.imageUrl = imageUrl;
+    this._id = _id ? new mongoDb.ObjectId(_id) : undefined;
+    this.userId = userId;
+  }
 
-// module.exports = class Product {
-//   constructor(id, title, imageUrl, description, price) {
-//     this.id = id;
-//     this.title = title;
-//     this.imageUrl = imageUrl;
-//     this.description = description;
-//     this.price = price;
-//   }
+  save() {
+    const db = getDb();
+    let dbOp;
 
-//   save() {
-//     return db.execute(
-//       "INSERT INTO products (title, price, description, imageUrl) VALUES (?, ?, ?, ?)",
-//       [this.title, this.price, this.description, this.imageUrl]
-//     );
-//   }
+    if (this._id) {
+      dbOp = db
+        .collection(TABLE_NAME)
+        .updateOne({ _id: this._id }, { $set: this });
+    } else {
+      dbOp = db.collection(TABLE_NAME).insertOne(this);
+    }
+    return dbOp
+      .then((result) => result)
+      .catch((err) => {
+        console.log("create product failed ", err);
+      });
+  }
 
-//   static destroy(id) {
-//     if (!id) return;
-//     getProductsFromFile((products) => {
-//       let copyProducts = [...products];
-//       let existProduct;
-//       const findIndex = copyProducts.findIndex((p) => p.id === id);
-//       if (findIndex > -1) {
-//         existProduct = products[findIndex];
-//         copyProducts.splice(findIndex, 1);
-//       }
+  static findAll() {
+    const db = getDb();
+    return db
+      .collection(TABLE_NAME)
+      .find()
+      .toArray()
+      .then((data) => data)
+      .catch((err) => {
+        console.log("get products list err ", err);
+        throw err;
+      });
+  }
 
-//       fs.writeFile(pathProduct, JSON.stringify(copyProducts), (err) => {
-//         if (!err && existProduct) Cart.deleteProduct(id, existProduct.price);
-//       });
-//     });
-//   }
+  static findById(id) {
+    const db = getDb();
+    const _id = new mongoDb.ObjectId(id);
+    return db
+      .collection(TABLE_NAME)
+      .find({ _id })
+      .next()
+      .then((product) => product)
+      .catch((err) => {
+        console.log("Not found product ", err);
+        throw "ENOTFOUND";
+      });
+  }
 
-//   static fetchAll() {
-//     return db.execute("select * from products");
-//   }
-
-//   static findId(id) {
-//     return db.execute("SELECT * FROM products WHERE products.id = ?", [id]);
-//   }
-// };
-const sequelize = require("../util/database");
-const { Sequelize, DataTypes } = require("sequelize");
-
-const Product = sequelize.define("product", {
-  id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  title: {
-    type: DataTypes.STRING,
-  },
-  price: {
-    type: DataTypes.DOUBLE,
-    allowNull: false,
-  },
-  imageUrl: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-});
+  static deleteById(id) {
+    const db = getDb();
+    const _id = new mongoDb.ObjectId(id);
+    return db
+      .collection(TABLE_NAME)
+      .deleteOne({ _id })
+      .then((product) => product)
+      .catch((err) => {
+        console.log("Not found product ", err);
+        throw "ENOTFOUND";
+      });
+  }
+}
 
 module.exports = Product;
