@@ -1,0 +1,13 @@
+version: "3.1"
+services:
+  mongodb:
+    image: arm64v8/mongo
+    container_name: mongodb_learning
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+    ports:
+      - "27017:27017"
+    # volumes:
+    #   - /var/mongo_data:/data/db

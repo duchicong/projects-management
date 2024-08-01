@@ -1,0 +1,5 @@
+# Setup docker
+
+mkdir folder mongo_data inside folder /var
+
+run`docker compose -f mongo.yml up -d`
