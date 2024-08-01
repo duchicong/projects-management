@@ -1,9 +1,17 @@
-const { Sequelize } = require("sequelize");
+require("dotenv").config();
+const mongodb = require("mongodb");
+const MongoClient = mongodb.MongoClient;
 
-const sequelize = new Sequelize("pm_db", "root", "root", {
-  host: "localhost",
-  dialect: "mysql",
-  port: 3308,
-});
+let _db;
 
-module.exports = sequelize;
+const mongoConnect = (callback) => {
+  MongoClient.connect(process.env.DB_CONNECT)
+    .then((client) => {
+      console.log("Connected");
+      callback(client);
+      _db = client.db();
+    })
+    .catch((err) => console.log(err));
+};
+
+module.exports = mongoConnect;
