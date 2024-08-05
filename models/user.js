@@ -19,10 +19,11 @@ const getDb = require("../util/database").getDb;
 
 const TABLE_NAME = "users";
 class User {
-  constructor({ nickname, email, _id }) {
+  constructor({ nickname, email, _id, cart }) {
     this.nickname = nickname;
     this.email = email;
     this._id = _id ? new mongoDb.ObjectId(_id) : undefined;
+    this.cart = cart;
   }
 
   save() {
@@ -35,6 +36,30 @@ class User {
         console.log("EADDUSER ", err);
         throw "EADDUSER";
       });
+  }
+
+  addToCart(product) {
+    let quantity = 1;
+    const cartItems = [...(this.cart?.items || [])];
+    const existProductInCart = cartItems.findIndex(
+      (item) => item.productId.toString() === product._id.toString()
+    );
+
+    if (existProductInCart !== -1) {
+      quantity = this.cart.items[existProductInCart].quantity + 1;
+
+      cartItems[existProductInCart].quantity = quantity;
+    } else {
+      cartItems.push({
+        productId: new mongoDb.ObjectId(product._id),
+        quantity,
+      });
+    }
+
+    const db = getDb();
+    return db
+      .collection(TABLE_NAME)
+      .updateOne({ _id: this._id }, { $set: { cart: { items: cartItems } } });
   }
 
   static findById(id) {
