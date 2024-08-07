@@ -62,6 +62,71 @@ class User {
       .updateOne({ _id: this._id }, { $set: { cart: { items: cartItems } } });
   }
 
+  getCart() {
+    const db = getDb();
+    const productIds = this.cart.items.map((i) => i.productId);
+    return db
+      .collection("products")
+      .find({ _id: { $in: productIds } })
+      .toArray()
+      .then((products) => {
+        const cartProducts = [...products];
+        return cartProducts.map((p) => {
+          const quantity =
+            this.cart.items.find(
+              (i) => i.productId.toString() === p._id.toString()
+            )?.quantity || 0;
+
+          return {
+            ...p,
+            quantity,
+          };
+        });
+      })
+      .catch((err) => {
+        console.log("err get cart ", err);
+      });
+  }
+
+  deleteItemFromCart(productId) {
+    const updatedCartItems = this.cart.items.filter(
+      (item) => item.productId.toString() !== productId.toString()
+    );
+    const db = getDb();
+    return db
+      .collection(TABLE_NAME)
+      .updateOne(
+        { _id: this._id },
+        { $set: { cart: { items: updatedCartItems } } }
+      );
+  }
+
+  addOrder() {
+    const db = getDb();
+    return this.getCart()
+      .then((products) => {
+        const order = {
+          items: products,
+          userId: this._id,
+        };
+        return db.collection("orders").insertOne(order);
+      })
+      .then(() => {
+        // update attribute cart inside request.user
+        this.cart = { items: [] };
+        // update db
+        return db
+          .collection(TABLE_NAME)
+          .updateOne({ _id: this._id }, { $set: { cart: { items: [] } } });
+      })
+      .catch((err) => err);
+  }
+
+  getOrder() {
+    const db = getDb();
+    return db.collection("orders").find({ userId: this._id }).toArray();
+  }
+
   static findById(id) {
     const db = getDb();
     const _id = new mongoDb.ObjectId(id);

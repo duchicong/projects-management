@@ -12,10 +12,10 @@
                 <li>
                     <h1># <%= index + 1 %></h1>
                     <ul>
-                        <% order.products.forEach((product, index) => { %>
+                        <% order.items.forEach((product, index) => { %>
                         <li>
                             <h1>Tile: <%= product.title %></h1>
-                            <h2>Quantity: <%= product.orderItem.quantity %></h2>
+                            <h2>Quantity: <%= product.quantity %></h2>
                         </li>
                         <% }) %>
                     </ul>

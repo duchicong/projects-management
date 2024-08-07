@@ -65,9 +65,6 @@ exports.deleteProduct = (req, res, next) => {
 exports.getCart = (req, res, next) => {
   req.user
     .getCart()
-    .then((cart) => {
-      return cart.getProducts();
-    })
     .then((products) => {
       res.render("shop/cart", {
         products,
@@ -86,8 +83,8 @@ exports.postCart = (req, res) => {
 
   Product.findById(productId)
     .then((product) => req.user.addToCart(product))
-    .then((data) => {
-      console.log("add to cart2 ", data);
+    .then(() => {
+      res.redirect("/cart");
     })
     .catch((err) => {});
   // let fetchedCart;
@@ -145,14 +142,7 @@ exports.postDeleteItemCart = (req, res) => {
   const productId = req.body.id;
 
   req.user
-    .getCart()
-    .then((cart) => {
-      return cart.getProducts({ where: { id: productId }, through: { cart } });
-    })
-    .then((products) => {
-      const product = products.shift();
-      return product.cartItem.destroy();
-    })
+    .deleteItemFromCart(productId)
     .then(() => {
       res.redirect("/cart");
     })
@@ -160,36 +150,15 @@ exports.postDeleteItemCart = (req, res) => {
 };
 
 exports.postOrder = (req, res) => {
-  let fetchedCart;
   req.user
-    .getCart()
-    .then((cart) => {
-      fetchedCart = cart;
-      return cart.getProducts();
-    })
-    .then((products) => {
-      return req.user
-        .createOrder()
-        .then((order) => {
-          return order.addProducts(
-            products.map((product) => {
-              product.orderItem = { quantity: product.cartItem.quantity };
-              return product;
-            })
-          );
-        })
-        .catch((err) => console.log(err));
-    })
-    .then(() => {
-      return fetchedCart.setProducts(null);
-    })
-    .then((res) => res.redirect("/orders"))
+    .addOrder()
+    .then(() => res.redirect("/orders"))
     .catch((err) => console.log(err));
 };
 
 exports.getOrders = (req, res, next) => {
   req.user
-    .getOrders({ include: ["products"] })
+    .getOrder()
     .then((orders) => {
       res.render("shop/orders", {
         orders: orders,
