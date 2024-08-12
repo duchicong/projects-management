@@ -1,4 +1,5 @@
 require("dotenv").config();
+const mongoose = require("mongoose");
 const mongodb = require("mongodb");
 const MongoClient = mongodb.MongoClient;
 
@@ -21,6 +22,8 @@ const getDb = () => {
   if (_db) return _db;
   throw "No database found!";
 };
+
+exports.dbConnect = () => mongoose.connect(process.env.DB_REMOTE);
 
 exports.mongoConnect = mongoConnect;
 exports.getDb = getDb;

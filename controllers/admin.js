@@ -33,27 +33,22 @@ exports.getEditProduct = (req, res) => {
 exports.postEditProduct = (req, res) => {
   const { id, title, description, imageUrl, price } = req.body;
   if (!id) res.redirect("/admin/products");
-  Product.findById(id)
-    .then((product) => {
-      if (!product) res.redirect("/");
-      product.title = title;
-      product.description = description;
-      product.imageUrl = imageUrl;
-      product.price = price;
-
-      return new Product(product).save();
-    })
+  Product.findByIdAndUpdate(id, { title, description, imageUrl, price })
     .then(() => {
       res.redirect("/admin/products");
     })
     .catch((err) => {
       console.log(err);
       res.redirect("/404");
+      // console.log("ERROR_FAILED");
+      // return "ERROR_FAILED";
     });
 };
 
 exports.getIndex = (req, res, next) => {
-  Product.findAll()
+  Product.find()
+    // .select("title description -_id")
+    // .populate("userId", "nickname")
     .then((products) => {
       res.render("admin/products", {
         prods: products,
@@ -70,7 +65,7 @@ exports.getIndex = (req, res, next) => {
 exports.postAddProduct = (req, res, next) => {
   const { title, description, imageUrl, price } = req.body;
 
-  new Product({ title, description, imageUrl, price, userId: req.user._id })
+  new Product({ title, description, imageUrl, price, userId: req.user })
     .save()
     .then(() => {
       res.redirect("/admin/products");
@@ -81,7 +76,7 @@ exports.postAddProduct = (req, res, next) => {
 exports.postDeleteProduct = (req, res) => {
   const id = req.body.id;
 
-  Product.deleteById(id)
+  Product.deleteOne({ _id: id })
     .then(() => res.redirect("/admin/products"))
     .catch((err) => {
       console.log(err);

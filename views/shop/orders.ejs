@@ -8,14 +8,14 @@
     <main>
         <% if(orders.length > 0) { %>
             <ul>
-                <% orders.forEach((order, index) => { %>
+                <% orders.forEach((order) => { %>
                 <li>
-                    <h1># <%= index + 1 %></h1>
+                    <h1># <%= order._id %></h1>
                     <ul>
-                        <% order.items.forEach((product, index) => { %>
+                        <% order.products.forEach((p, index) => { %>
                         <li>
-                            <h1>Tile: <%= product.title %></h1>
-                            <h2>Quantity: <%= product.quantity %></h2>
+                            <h1>Tile: <%= p.product.title %></h1>
+                            <h2>Quantity: <%= p.quantity %></h2>
                         </li>
                         <% }) %>
                     </ul>

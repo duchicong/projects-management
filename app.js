@@ -1,6 +1,7 @@
 const path = require("path");
-const connectDb = require("./util/database").mongoConnect;
 const express = require("express");
+const mongoose = require("mongoose");
+require("dotenv").config();
 const bodyParser = require("body-parser");
 // const sequelize = require("./util/database");
 // const Product = require("./models/product");
@@ -24,9 +25,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, res, next) => {
-  User.findById("66aba4e71659a17dd0eb436f")
+  User.findById("66b4ddf6f269d726ffcf68ae")
     .then((user) => {
-      req.user = new User({ ...user, cart: user.cart });
+      req.user = user;
       next();
     })
     .catch((err) => console.log(err));
@@ -72,7 +73,23 @@ app.use(shopRoutes);
 //     app.listen(8080);
 //   })
 //   .catch((err) => console.log(err));
+mongoose
+  .connect(process.env.DB_REMOTE)
+  .then(() => {
+    User.findById("66b4ddf6f269d726ffcf68ae").then((user) => {
+      if (!user) {
+        const user = new User({
+          _id: "66b4ddf6f269d726ffcf68ae",
+          nickname: "cong.du",
+          email: "duconggpdg@gmail.com",
+          cart: { items: [] },
+        });
+        user.save();
+      }
+    });
 
-connectDb(() => {
-  app.listen(8080);
-});
+    app.listen(8080);
+  })
+  .catch((err) => {
+    console.log("Initial failed!!! ", err);
+  });
