@@ -8,6 +8,7 @@ exports.getProducts = (req, res, next) => {
         prods: rows,
         pageTitle: "All products",
         path: "/products",
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => console.log("err ", err));
@@ -23,6 +24,7 @@ exports.getIndex = (req, res, next) => {
         hasProducts: rows.length > 0,
         activeShop: true,
         productCSS: true,
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => console.log("err ", err));
@@ -31,7 +33,7 @@ exports.getIndex = (req, res, next) => {
 exports.getDetail = (req, res, next) => {
   const productId = req.params.id;
 
-  Product.findById(ObjectI)
+  Product.findById(productId)
     .then((product) => {
       if (!product) res.redirect("/");
 
@@ -42,6 +44,7 @@ exports.getDetail = (req, res, next) => {
         hasProducts: true,
         activeShop: true,
         productCSS: true,
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => console.log("err ", err));
@@ -57,12 +60,14 @@ exports.deleteProduct = (req, res, next) => {
         hasProducts: rows.length > 0,
         activeShop: true,
         productCSS: true,
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => console.log("err ", err));
 };
 
 exports.getCart = (req, res, next) => {
+  if (!req.user) res.redirect("/login");
   req.user
     .populate("cart.items.productId")
     .then((user) => {
@@ -74,12 +79,14 @@ exports.getCart = (req, res, next) => {
         hasProducts: products.length > 0,
         activeShop: true,
         productCSS: true,
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => console.log(err));
 };
 
 exports.postCart = (req, res) => {
+  if (!req.user) res.redirect("/login");
   const productId = req.body.productId;
 
   Product.findById(productId)
@@ -99,6 +106,7 @@ exports.getCheckout = (req, res, next) => {
       hasProducts: products.length > 0,
       activeShop: true,
       productCSS: true,
+      isAuth: req.session.isLoggedIn,
     });
   });
 };
@@ -150,6 +158,7 @@ exports.getOrders = (req, res, next) => {
         hasProducts: orders.length > 0,
         activeShop: true,
         productCSS: true,
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => console.log(err));

@@ -26,6 +26,8 @@ main {
   height: 100%;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .main-header__item-list {

@@ -3,19 +3,24 @@ const express = require("express");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const bodyParser = require("body-parser");
-// const sequelize = require("./util/database");
-// const Product = require("./models/product");
+const session = require("express-session");
+const MongoDBStore = require("connect-mongodb-session")(session);
 const User = require("./models/user");
 
 const errorController = require("./controllers/error");
 
 const app = express();
+const store = new MongoDBStore({
+  uri: process.env.DB_REMOTE,
+  collection: "sessions",
+});
 
 app.set("view engine", "ejs");
 app.set("views", "views");
 
 const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
+const authRoutes = require("./routes/auth");
 // const Cart = require("./models/cart");
 // const CartItem = require("./models/cart-item");
 // const Order = require("./models/order");
@@ -23,16 +28,28 @@ const shopRoutes = require("./routes/shop");
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  session({
+    secret: "my secret",
+    resave: false,
+    saveUninitialized: false,
+    store,
+  })
+);
 
 app.use((req, res, next) => {
-  User.findById("66b4ddf6f269d726ffcf68ae")
+  if (!req.session.user) {
+    return next();
+  }
+  User.findById(req.session.user._id)
     .then((user) => {
       req.user = user;
       next();
     })
-    .catch((err) => console.log(err));
+    .catch((err) => err);
 });
 
+app.use(authRoutes);
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 
