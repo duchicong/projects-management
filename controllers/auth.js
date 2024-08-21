@@ -1,7 +1,17 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/user");
+const nodemailer = require("nodemailer");
+const sendgridTransport = require("nodemailer-sendgrid-transport");
 
 const SALT = bcrypt.genSaltSync(10);
+
+const transporter = nodemailer.createTransport(
+  sendgridTransport({
+    auth: {
+      api_key: "",
+    },
+  })
+);
 
 exports.getLogin = (req, res, next) => {
   let message = req.flash("error");
@@ -87,7 +97,15 @@ exports.postRegister = (req, res, next) => {
           });
           return user.save();
         })
-        .then(() => res.redirect("/login"))
+        .then(() => {
+          transporter.sendMail({
+            to: email,
+            from: "duconggpdg@gmail.com",
+            subject: "Test send mail",
+            html: "<h1>You successfully signed up!</h1>",
+          });
+          res.redirect("/login");
+        })
         .catch((err) => err);
     })
     .catch((err) => console.log("Register user err ", err));
