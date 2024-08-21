@@ -7,9 +7,13 @@
    <%- include('../includes/navigation.ejs') %>
     <main>
         <% if (errorMsg) { %>
-        <div class="error-message error-message--error"><%= errorMsg %></div>
+            <div class="error-message error-message--error"><%= errorMsg %></div>
         <% } %>
-        <form class="login-form" action="login" method="POST">
+        <form class="register-form" action="/register" method="POST">
+            <div class="form-control">
+                <label for="nickname">Nickname</label>
+                <input type="text" name="nickname" id="nickname">
+            </div>
             <div class="form-control">
                 <label for="email">Email</label>
                 <input type="email" name="email" id="email">
@@ -18,8 +22,12 @@
                 <label for="password">Password</label>
                 <input type="password" name="password" id="password" />
             </div>
+            <div class="form-control">
+                <label for="confirmPassword">Confirm password</label>
+                <input type="password" name="confirmPassword" id="confirmPassword" />
+            </div>
             <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-            <button class="btn" type="submit">Login</button>
+            <button class="btn primary" type="submit">Register</button>
         </form>
     </main>
 <%- include('../includes/end.ejs') %>

@@ -6,6 +6,9 @@ const bodyParser = require("body-parser");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
 const User = require("./models/user");
+const middlewareIsAuth = require("./middleware/isAuth");
+const csrf = require("csurf");
+const flash = require("connect-flash");
 
 const errorController = require("./controllers/error");
 
@@ -14,6 +17,8 @@ const store = new MongoDBStore({
   uri: process.env.DB_REMOTE,
   collection: "sessions",
 });
+
+const csrfProtection = csrf();
 
 app.set("view engine", "ejs");
 app.set("views", "views");
@@ -36,6 +41,8 @@ app.use(
     store,
   })
 );
+app.use(csrfProtection);
+app.use(flash());
 
 app.use((req, res, next) => {
   if (!req.session.user) {
@@ -46,65 +53,22 @@ app.use((req, res, next) => {
       req.user = user;
       next();
     })
-    .catch((err) => err);
+    .catch((err) => console.log(err));
+});
+
+app.use((req, res, next) => {
+  res.locals.isAuth = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
 });
 
 app.use(authRoutes);
-app.use("/admin", adminRoutes);
+app.use("/admin", middlewareIsAuth, adminRoutes);
 app.use(shopRoutes);
 
-// app.use(errorController.get404);
-
-// Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
-// User.hasMany(Product);
-// User.hasOne(Cart);
-// Cart.belongsTo(User);
-// Cart.belongsToMany(Product, { through: CartItem });
-// Product.belongsToMany(Cart, { through: CartItem });
-// Order.belongsTo(User);
-// User.hasMany(Order);
-// Order.belongsToMany(Product, { through: OrderItem });
-
-/**
- * force: {true} this is alway delete data if has any update of tables: user, product is updated.
- */
-// sequelize
-//   // .sync({ force: true })
-//   .sync()
-//   .then((result) => {
-//     // console.log(result);
-//     return User.findByPk(1);
-//   })
-//   .then((user) => {
-//     if (!user)
-//       return User.create({
-//         nickname: "cong.du",
-//         email: "duconggpdg@gmail.com",
-//       });
-//     return user;
-//   })
-//   .then((user) => {
-//     return user.createCart();
-//   })
-//   .then(() => {
-//     app.listen(8080);
-//   })
-//   .catch((err) => console.log(err));
 mongoose
   .connect(process.env.DB_REMOTE)
   .then(() => {
-    User.findById("66b4ddf6f269d726ffcf68ae").then((user) => {
-      if (!user) {
-        const user = new User({
-          _id: "66b4ddf6f269d726ffcf68ae",
-          nickname: "cong.du",
-          email: "duconggpdg@gmail.com",
-          cart: { items: [] },
-        });
-        user.save();
-      }
-    });
-
     app.listen(8080);
   })
   .catch((err) => {

@@ -108,3 +108,18 @@ main {
   background-color: #00695c;
   color: white;
 }
+
+.error-message {
+  margin: auto;
+  width: 90%;
+  border:  1px solid rgb(46, 46, 161);
+  background-color: rgb(112, 112, 214);
+  padding: .5rem;
+  border-radius: 4px;
+}
+
+.error-message--error {
+  border-color: rgb(169, 36, 36);
+  background-color: rgb(243, 94, 94);
+  color: rgb(169, 36, 36);
+}

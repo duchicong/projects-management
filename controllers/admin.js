@@ -8,7 +8,6 @@ exports.getAddProduct = (req, res, next) => {
     product: undefined,
     productCSS: true,
     activeAddProduct: true,
-    isAuth: req.session.isLoggedIn,
   });
 };
 
@@ -26,7 +25,6 @@ exports.getEditProduct = (req, res) => {
         hasProducts: true,
         activeShop: true,
         productCSS: true,
-        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => console.log("err ", err));
@@ -59,7 +57,6 @@ exports.getIndex = (req, res, next) => {
         hasProducts: products.length > 0,
         activeShop: true,
         productCSS: true,
-        isAuth: req.session.isLoggedIn,
       });
     })
     .catch((err) => console.log("err ", err));
