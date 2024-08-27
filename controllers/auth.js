@@ -2,20 +2,22 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/user");
 const nodemailer = require("nodemailer");
 const sendgridTransport = require("nodemailer-sendgrid-transport");
+const crypto = require("crypto");
 
 const SALT = bcrypt.genSaltSync(10);
 
-const transporter = nodemailer.createTransport(
-  sendgridTransport({
-    auth: {
-      api_key: "",
-    },
-  })
-);
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: "duconggpdg@gmail.com",
+    pass: "fzvb tfmk raec vxdd",
+  },
+});
 
 exports.getLogin = (req, res, next) => {
   let message = req.flash("error");
-  console.log("mess ", message);
   res.render("auth/login", {
     pageTitle: "Login",
     path: "/login",
@@ -109,4 +111,117 @@ exports.postRegister = (req, res, next) => {
         .catch((err) => err);
     })
     .catch((err) => console.log("Register user err ", err));
+};
+
+exports.getReset = (req, res, next) => {
+  let message = req.flash("error");
+  res.render("auth/reset", {
+    pageTitle: "Reset password",
+    path: "/reset-password",
+    errorMsg: message[0],
+  });
+};
+
+exports.postReset = (req, res, next) => {
+  crypto.randomBytes(32, (err, buffer) => {
+    if (err) {
+      console.log("Error random reset pwd: ", err);
+      return res.redirect("/reset-passord");
+    }
+    const token = buffer.toString("hex");
+
+    User.findOne({ email: req.body.email })
+      .then((user) => {
+        if (!user) {
+          req.flash("error", "No account with that email found.");
+          return res.redirect("/reset-password");
+        }
+
+        user.resetToken = token;
+        user.resetTokenExpired = Date.now() + 3600000;
+
+        return user.save();
+      })
+      .then((user) => {
+        transporter.sendMail(
+          {
+            to: user.email,
+            from: "hoangle19991102@gmail.com",
+            subject: "Password reset",
+            html: `
+          <p>You requrested a password reset</p>
+          <p>Click this <a href="http://localhost:8080/reset/${token}">link here</a> to set a new password</p>
+          `,
+          },
+          (err) => {
+            console.log("is delivered or failed: ", err);
+          }
+        );
+        return res.redirect("/login");
+      })
+      .catch((err) => err);
+  });
+};
+
+exports.getNewPassword = (req, res, next) => {
+  const { token } = req.params;
+
+  // find one user reset token created in day
+  User.findOne({ resetToken: token, resetTokenExpired: { $gt: Date.now() } })
+    .then((user) => {
+      let message = req.flash("error");
+
+      if (!user) {
+        req.flash("error", "Token is invalid or expired.");
+        return res.redirect("/login");
+      }
+
+      res.render("auth/new-password", {
+        pageTitle: "Update password",
+        path: "/reset/" + token,
+        errorMsg: message[0],
+        userId: user._id.toString(),
+        token,
+      });
+    })
+    .catch((err) => console.log("err reset password by token >>> ", err));
+};
+
+exports.postNewPassword = (req, res, next) => {
+  const { password, id, passwordToken } = req.body;
+  let resetUser;
+
+  if ([password, id, passwordToken].some((i) => !i)) {
+    req.flash(
+      "error",
+      "Oops! Something went wrong and update password is failed!"
+    );
+    return res.redirect("/login");
+  }
+
+  User.findOne({
+    resetToken: passwordToken,
+    resetTokenExpired: { $gt: Date.now() },
+    _id: id,
+  })
+    .then((user) => {
+      if (!user) {
+        req.flash("error", "Oops! User is not exist!");
+        return res.redirect("/login");
+      }
+
+      resetUser = user;
+      return bcrypt.hash(password, SALT);
+    })
+    .then((hashedPwd) => {
+      resetUser.password = hashedPwd;
+      resetUser.resetToken = undefined;
+      resetUser.resetTokenExpired = undefined;
+      return resetUser.save();
+    })
+    .then(() => {
+      req.flash("success", "Your password is updated!");
+      res.redirect("/login");
+    })
+    .catch((err) => console.log("update password is failed >>> ", err));
 };
