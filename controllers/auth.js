@@ -3,6 +3,7 @@ const User = require("../models/user");
 const nodemailer = require("nodemailer");
 const sendgridTransport = require("nodemailer-sendgrid-transport");
 const crypto = require("crypto");
+const { validationResult } = require("express-validator");
 
 const SALT = bcrypt.genSaltSync(10);
 
@@ -22,14 +23,22 @@ exports.getLogin = (req, res, next) => {
     pageTitle: "Login",
     path: "/login",
     errorMsg: message[0],
+    validate: [],
   });
 };
 
 exports.postLogin = (req, res, next) => {
   // res.setHeader("Set-cookie", "loggedIn=true; HttpOnly; Max-age=100000");
+  const errors = validationResult(req);
   const { email, password } = req.body;
 
-  if (!password) return res.redirect("/login");
+  if (!errors.isEmpty())
+    return res.status(422).render("auth/login", {
+      pageTitle: "Login",
+      path: "/login",
+      errorMsg: undefined,
+      validate: errors.array(),
+    });
 
   User.findOne({ email })
     .then((user) => {
@@ -78,6 +87,15 @@ exports.getRegister = (req, res, next) => {
 
 exports.postRegister = (req, res, next) => {
   const { email, nickname, password } = req.body;
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(422).render("auth/register", {
+      pageTitle: "Register",
+      path: "/register",
+      errorMsg: errors.array(),
+    });
+  }
 
   User.findOne({ email })
     .then((userDoc) => {

@@ -5,6 +5,8 @@
 
 <body>
    <%- include('../includes/navigation.ejs') %>
+   <% let msgEmail = validate.find(e => e.path === 'email') %>
+   <% let msgPwd = validate.find(e => e.path === 'password') %>
     <main>
         <% if (errorMsg) { %>
         <div class="error-message error-message--error"><%= errorMsg %></div>
@@ -12,11 +14,13 @@
         <form class="login-form" action="login" method="POST">
             <div class="form-control">
                 <label for="email">Email</label>
-                <input type="email" name="email" id="email">
+                <input class="<%= msgEmail ? 'invalid' : '' %>" type="email" name="email" id="email">
+                <p class="<%= msgEmail ? 'text-error' : '' %>"><%= msgEmail?.msg %></p>
             </div>
             <div class="form-control">
                 <label for="password">Password</label>
-                <input type="password" name="password" id="password" />
+                <input class="<%= msgPwd ? 'invalid' : '' %>" type="password" name="password" id="password" />
+                <p class="<%= msgPwd ? 'text-error' : '' %>"><%= msgPwd?.msg %></p>
             </div>
             <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
             <button class="btn" type="submit">Login</button>
