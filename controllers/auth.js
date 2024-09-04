@@ -67,7 +67,11 @@ exports.postLogin = (req, res, next) => {
           res.redirect("/login");
         });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postLogout = (req, res, next) => {
@@ -126,9 +130,17 @@ exports.postRegister = (req, res, next) => {
           });
           res.redirect("/login");
         })
-        .catch((err) => err);
+        .catch((err) => {
+          const error = new Error(err);
+          error.httpStatusCode = 500;
+          return next(error);
+        });
     })
-    .catch((err) => console.log("Register user err ", err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.getReset = (req, res, next) => {
@@ -177,7 +189,11 @@ exports.postReset = (req, res, next) => {
         );
         return res.redirect("/login");
       })
-      .catch((err) => err);
+      .catch((err) => {
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   });
 };
 
@@ -202,7 +218,11 @@ exports.getNewPassword = (req, res, next) => {
         token,
       });
     })
-    .catch((err) => console.log("err reset password by token >>> ", err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postNewPassword = (req, res, next) => {
@@ -241,5 +261,9 @@ exports.postNewPassword = (req, res, next) => {
       req.flash("success", "Your password is updated!");
       res.redirect("/login");
     })
-    .catch((err) => console.log("update password is failed >>> ", err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };

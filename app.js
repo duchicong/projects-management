@@ -50,10 +50,15 @@ app.use((req, res, next) => {
   }
   User.findById(req.session.user._id)
     .then((user) => {
+      if (!user) return next();
       req.user = user;
       next();
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 });
 
 app.use((req, res, next) => {
@@ -65,6 +70,13 @@ app.use((req, res, next) => {
 app.use(authRoutes);
 app.use("/admin", middlewareIsAuth, adminRoutes);
 app.use(shopRoutes);
+app.get("/500", errorController.get500);
+app.use(errorController.get404);
+
+// error-handling
+app.use((err, req, res, next) => {
+  res.status(err.httpStatusCode).redirect(`/${err.httpStatusCode}`);
+});
 
 mongoose
   .connect(process.env.DB_REMOTE)
@@ -72,5 +84,7 @@ mongoose
     app.listen(8080);
   })
   .catch((err) => {
-    console.log("Initial failed!!! ", err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   });

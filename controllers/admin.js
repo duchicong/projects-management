@@ -11,7 +11,7 @@ exports.getAddProduct = (req, res, next) => {
   });
 };
 
-exports.getEditProduct = (req, res) => {
+exports.getEditProduct = (req, res, next) => {
   const productId = req.params.id;
 
   Product.findById(productId)
@@ -27,10 +27,14 @@ exports.getEditProduct = (req, res) => {
         productCSS: true,
       });
     })
-    .catch((err) => console.log("err ", err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
-exports.postEditProduct = (req, res) => {
+exports.postEditProduct = (req, res, next) => {
   const { id, title, description, imageUrl, price } = req.body;
   if (!id) res.redirect("/admin/products");
   Product.findByIdAndUpdate(id, { title, description, imageUrl, price })
@@ -38,10 +42,9 @@ exports.postEditProduct = (req, res) => {
       res.redirect("/admin/products");
     })
     .catch((err) => {
-      console.log(err);
-      res.redirect("/404");
-      // console.log("ERROR_FAILED");
-      // return "ERROR_FAILED";
+      const error = new Error(err);
+      error.httpStatusCode = 404;
+      return next(error);
     });
 };
 
@@ -59,7 +62,11 @@ exports.getIndex = (req, res, next) => {
         productCSS: true,
       });
     })
-    .catch((err) => console.log("err ", err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postAddProduct = (req, res, next) => {
@@ -70,10 +77,14 @@ exports.postAddProduct = (req, res, next) => {
     .then(() => {
       res.redirect("/admin/products");
     })
-    .catch((err) => console.log("error create product ", err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
-exports.postDeleteProduct = (req, res) => {
+exports.postDeleteProduct = (req, res, next) => {
   const id = req.body.id;
 
   Product.deleteOne({ _id: id })

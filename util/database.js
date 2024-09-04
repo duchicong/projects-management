@@ -13,8 +13,9 @@ const mongoConnect = (callback) => {
       _db = client.db("shop");
     })
     .catch((err) => {
-      console.log(err);
-      throw err;
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 

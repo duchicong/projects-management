@@ -29,7 +29,11 @@ app.use((req, res, next) => {
       req.user = user;
       next();
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 });
 
 app.use("/admin", adminRoutes);
