@@ -12,6 +12,7 @@ router.get("/products/:id", shopController.getDetail);
 router.get("/cart", middlewareIsAuth, shopController.getCart);
 router.post("/cart", middlewareIsAuth, shopController.postCart);
 router.get("/orders", middlewareIsAuth, shopController.getOrders);
+router.get("/invoices/:orderId", middlewareIsAuth, shopController.getInvoice);
 router.post("/create-order", middlewareIsAuth, shopController.postOrder);
 router.get("/checkout", middlewareIsAuth, shopController.getCheckout);
 router.post(
@@ -19,5 +20,4 @@ router.post(
   middlewareIsAuth,
   shopController.postDeleteItemCart
 );
-
 module.exports = router;

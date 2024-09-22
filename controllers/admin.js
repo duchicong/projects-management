@@ -1,4 +1,5 @@
 const Product = require("../models/product");
+const fileHelper = require("../util/file");
 
 exports.getAddProduct = (req, res, next) => {
   res.render("admin/add-product", {
@@ -8,6 +9,8 @@ exports.getAddProduct = (req, res, next) => {
     product: undefined,
     productCSS: true,
     activeAddProduct: true,
+    errorMsg: undefined,
+    validate: [],
   });
 };
 
@@ -25,6 +28,7 @@ exports.getEditProduct = (req, res, next) => {
         hasProducts: true,
         activeShop: true,
         productCSS: true,
+        errorMsg: undefined,
       });
     })
     .catch((err) => {
@@ -35,9 +39,42 @@ exports.getEditProduct = (req, res, next) => {
 };
 
 exports.postEditProduct = (req, res, next) => {
-  const { id, title, description, imageUrl, price } = req.body;
+  const { id, title, description, price } = req.body;
+  const image = req.file;
+
+  if (!image) {
+    return res.status(422).render("admin/add-product", {
+      pageTitle: "Add Product",
+      path: `/admin/add-product`,
+      hasProducts: true,
+      activeShop: true,
+      productCSS: true,
+      product: {
+        title,
+        price,
+        description,
+      },
+      errorMsg: "Attached file is not an image.",
+      validationErrors: [],
+    });
+  }
   if (!id) res.redirect("/admin/products");
-  Product.findByIdAndUpdate(id, { title, description, imageUrl, price })
+  Product.findById(id)
+    .then((product) => {
+      if (!product || product?.userId?.toString() !== req.user._id.toString()) {
+        return res.redirect("/");
+      }
+
+      if (image) {
+        fileHelper.deleteFile(product.imageUrl);
+        product.imageUrl = image.path;
+      }
+      product.title = title;
+      product.description = description;
+      product.price = price;
+
+      return product.save();
+    })
     .then(() => {
       res.redirect("/admin/products");
     })
@@ -70,9 +107,31 @@ exports.getIndex = (req, res, next) => {
 };
 
 exports.postAddProduct = (req, res, next) => {
+  // const errors = validationResult(req);
   const { title, description, imageUrl, price } = req.body;
+  const image = req.file;
+  console.log("image ", { req, image });
 
-  new Product({ title, description, imageUrl, price, userId: req.user })
+  if (!image) {
+    return res.render("admin/add-product", {
+      pageTitle: "Add Product",
+      path: "/admin/add-product",
+      formsCSS: true,
+      product: { title, description, price },
+      productCSS: true,
+      activeAddProduct: true,
+      errorMsg: "Attached file is not an image.",
+      // validate: errors.array(),
+    });
+  }
+
+  new Product({
+    title,
+    description,
+    imageUrl: image.path,
+    price,
+    userId: req.user,
+  })
     .save()
     .then(() => {
       res.redirect("/admin/products");
@@ -87,10 +146,12 @@ exports.postAddProduct = (req, res, next) => {
 exports.postDeleteProduct = (req, res, next) => {
   const id = req.body.id;
 
-  Product.deleteOne({ _id: id })
+  Product.findById(id)
+    .then((prod) => {
+      if (!prod) return next(new Error("Product not found!"));
+      fileHelper.deleteFile(prod.imageUrl);
+      return prod.deleteOne({ _id: id });
+    })
     .then(() => res.redirect("/admin/products"))
-    .catch((err) => {
-      console.log(err);
-      res.redirect("/404");
-    });
+    .catch((err) => next(err));
 };

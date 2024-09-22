@@ -1,3 +1,6 @@
+const fs = require("fs");
+const path = require("path");
+const PDFDocument = require("pdfkit");
 const Order = require("../models/order");
 const Product = require("../models/product");
 
@@ -123,6 +126,8 @@ exports.getCheckout = (req, res, next) => {
       hasProducts: products.length > 0,
       activeShop: true,
       productCSS: true,
+      errorMsg: undefined,
+      validate: [],
     });
   });
 };
@@ -182,6 +187,8 @@ exports.getOrders = (req, res, next) => {
         hasProducts: orders.length > 0,
         activeShop: true,
         productCSS: true,
+        errorMsg: undefined,
+        validate: [],
       });
     })
     .catch((err) => {
@@ -189,4 +196,39 @@ exports.getOrders = (req, res, next) => {
       error.httpStatusCode = 500;
       return next(error);
     });
+};
+
+exports.getInvoice = (req, res, next) => {
+  const { orderId } = req.params;
+
+  Order.findById(orderId)
+    .then((order) => {
+      if (!order) return next(new Error("No order found!"));
+      if (order.user?.userId.toString() !== req.session.user?._id?.toString())
+        return next(new Error("Unauthorized!"));
+
+      const invoiceName = "invoice-" + orderId + ".pdf";
+      const pdfDoc = new PDFDocument();
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        'inline; filename="' + invoiceName + '"'
+      );
+      pdfDoc.pipe(fs.createWriteStream(invoiceName));
+      pdfDoc.pipe(res);
+      pdfDoc.fontSize(26).text("dummy data", {
+        underline: true,
+      });
+      let totalPrice = 0;
+      order.products.forEach((p) => {
+        totalPrice += p.quantity + p.product.price;
+        pdfDoc.text(
+          p.product.title + " - " + p.quantity + "x" + "$" + p.product.price
+        );
+      });
+      pdfDoc.text(["----------------"]);
+      pdfDoc.fontSize(12).text("Total price: $" + totalPrice);
+      pdfDoc.end();
+    })
+    .catch((err) => next(err));
 };

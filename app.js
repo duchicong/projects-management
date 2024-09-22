@@ -9,6 +9,7 @@ const User = require("./models/user");
 const middlewareIsAuth = require("./middleware/isAuth");
 const csrf = require("csurf");
 const flash = require("connect-flash");
+const multer = require("multer");
 
 const errorController = require("./controllers/error");
 
@@ -31,8 +32,25 @@ const authRoutes = require("./routes/auth");
 // const Order = require("./models/order");
 // const OrderItem = require("./models/order-item");
 
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/images");
+  },
+  filename: (req, file, cb) => {
+    cb(null, new Date().toISOString() + "_" + file.originalname);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (["image/png", "image/jpg", "image/jpeg"].includes(file.mimetype))
+    cb(null, true);
+  else cb(null, false);
+};
+
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(multer({ storage: fileStorage, fileFilter }).single("image"));
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(
   session({
     secret: "my secret",
@@ -75,6 +93,7 @@ app.use(errorController.get404);
 
 // error-handling
 app.use((err, req, res, next) => {
+  console.log("err ", err);
   res.status(err.httpStatusCode).redirect(`/${err.httpStatusCode}`);
 });
 
