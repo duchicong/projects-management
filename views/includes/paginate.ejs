@@ -1,0 +1,13 @@
+<section class="paginate">
+  <ul>
+    <% for(let i = 1;i <= lastPage; i++) { %>
+    <li>
+      <a
+        href="?page=<%= i %>&size=2"
+        class="<%= currentPage === i ? 'active' : '' %>"
+        ><%= i %></a
+      >
+    </li>
+    <% } %>
+  </ul>
+</section>

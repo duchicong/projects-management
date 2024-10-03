@@ -21,7 +21,19 @@ exports.getProducts = (req, res, next) => {
 };
 
 exports.getIndex = (req, res, next) => {
+  const page = +req.query.page || 1;
+  const size = +req.query.size || 2;
+  let totalProds;
+
   Product.find()
+    .countDocuments()
+    .then((numProds) => {
+      totalProds = numProds;
+
+      return Product.find()
+        .skip((page - 1) * size)
+        .limit(size);
+    })
     .then((rows) => {
       res.render("shop/index", {
         prods: rows,
@@ -30,6 +42,12 @@ exports.getIndex = (req, res, next) => {
         hasProducts: rows.length > 0,
         activeShop: true,
         productCSS: true,
+        currentPage: page,
+        hasNextPage: size * page < totalProds,
+        hasPreviousPage: page > 1,
+        nextPage: page + 1,
+        previousPage: page - 1,
+        lastPage: Math.ceil(totalProds / size),
       });
     })
     .catch((err) => {

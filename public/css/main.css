@@ -123,3 +123,33 @@ main {
   background-color: rgb(243, 94, 94);
   color: rgb(169, 36, 36);
 }
+
+.paginate {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.paginate ul {
+  list-style: none;
+  display: inline-block;
+}
+
+.paginate ul li {
+  list-style: none;
+  display: inline-block;
+}
+
+.paginate > ul li a{
+  padding: 4px;
+  margin-right: 2px;
+  text-decoration: none;
+  border: 1px solid blue;
+  border-radius: 2px;
+  min-width: 20px;
+}
+
+.paginate > ul li a:hover, .paginate > ul li a:active, .paginate > ul li a.active {
+  background-color: blue;
+  color: white;
+}
+
